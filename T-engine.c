@@ -20,6 +20,9 @@ typedef struct {
   int key_up, key_down, key_left, key_right;
   int mouse_x, mouse_y;
   int mouse_button_pressed;
+
+  // custom hook for user defined functions
+  void (*on_update)(Thing *thing, float delta_time); 
 } GameState;
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
@@ -63,9 +66,13 @@ void add_thing(GameState *game, int x, int y, int width, int height, float vx,
 
 void update_objects(GameState *game, float delta_time) {
   for (int i = 0; i < game->thing_count; i++) {
-    Thing *obj = &game->things[i];
-    obj->x += obj->vx * delta_time;
-    obj->y += obj->vy * delta_time;
+    Thing *thing = &game->things[i];
+    thing->x += thing->vx * delta_time;
+    thing->y += thing->vy * delta_time;
+
+    if (game->on_update) {
+      game->on_update(thing, delta_time);
+    }
   }
 }
 
