@@ -7,9 +7,11 @@
 
 typedef struct {
   int id;            // unique ID for each thing
+  int type_id;       // id to identify different types of things
   float x, y;        // position
   float vx, vy;      // velocity
   int width, height; // size
+  void *custom_Properies;
 } Thing;
 
 typedef struct {
@@ -22,7 +24,7 @@ typedef struct {
   int mouse_button_pressed;
 
   // custom hook for user defined functions
-  void (*on_update)(Thing *thing, float delta_time); 
+  void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
@@ -50,12 +52,13 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
 }
 
 void add_thing(GameState *game, int x, int y, int width, int height, float vx,
-               float vy) {
+               float vy, int tid) {
   if (game->thing_count >= MAX_THINGS)
     return;
 
   Thing *obj = &game->things[game->thing_count++];
   obj->id = game->thing_count;
+  obj->type_id = tid;
   obj->x = x;
   obj->y = y;
   obj->vx = vx;
@@ -71,7 +74,7 @@ void update_objects(GameState *game, float delta_time) {
     thing->y += thing->vy * delta_time;
 
     if (game->on_update) {
-      game->on_update(thing, delta_time);
+      game->on_update(game, thing, delta_time);
     }
   }
 }
@@ -83,11 +86,16 @@ void handle_input(GameState *game) {
       exit(0);
     }
 
+    printf("\n~~~~~~~~~~~~~~~~\nInputs:");
     const Uint8 *state = SDL_GetKeyboardState(NULL);
     game->key_up = state[SDL_SCANCODE_UP];
+    printf("key_up:%d\n", game->key_up);
     game->key_down = state[SDL_SCANCODE_DOWN];
+    printf("key_down:%d\n", game->key_down);
     game->key_left = state[SDL_SCANCODE_LEFT];
+    printf("key_left:%d\n", game->key_left);
     game->key_right = state[SDL_SCANCODE_RIGHT];
+    printf("key_right:%d\n", game->key_right);
 
     if (event.type == SDL_MOUSEMOTION) {
       game->mouse_x = event.motion.x;

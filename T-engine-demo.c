@@ -1,12 +1,59 @@
 #include "T-engine.c"
+#include <threads.h>
 
-void custom_on_update(Thing *thing, float delta_time) {
-  if (thing->x <= 0 || thing->x >= 750) {
-    thing->vx = -thing->vx;
+void player_Update(void *pgame, Thing *thing, float delta_time) {
+
+  GameState *game = (GameState *)pgame;
+
+  if (game->key_up) {
+    thing->vy = -500;
+  }
+  if (game->key_down) {
+    thing->vy = 500;
+  } else {
+    thing->vy /= 1.1;
   }
 
-  if (thing->y <= 0 || thing->y >= 550) {
-    thing->vy = -thing->vy;
+  if (game->key_right) {
+    thing->vx = 500;
+  }
+  if (game->key_left) {
+    thing->vx = -500;
+  } else {
+    thing->vx /= 1.1;
+  }
+
+  if (thing->x >= 800 - thing->width) {
+    thing->x = 800 - thing->width;
+  }
+  if (thing->x <= 0) {
+    thing->x = 0;
+  }
+
+  if (thing->y >= 600 - thing->height) {
+    thing->y = 600 - thing->height;
+  }
+  if (thing->y <= 0) {
+    thing->y = 0;
+  }
+}
+
+void cursor_Update(void *pgame, Thing *thing, float delta_time) {
+
+  GameState *game = (GameState *)pgame;
+
+  thing->x = game->mouse_x;
+  thing->y = game->mouse_y;
+}
+
+void update(void *pgame, Thing *thing, float delta_time) {
+  switch (thing->type_id) {
+  case 1:
+    player_Update(pgame, thing, delta_time);
+    break;
+  case 2:
+    cursor_Update(pgame, thing, delta_time);
+    break;
   }
 }
 
@@ -35,9 +82,10 @@ int main() {
 
   GameState game = {0};
 
-  add_thing(&game, 0, 0, 20, 20, 0.0f, 0.0f);
+  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, 1);
+  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, 2);
 
-  game.on_update = custom_on_update;
+  game.on_update = update;
 
   game_loop(&game, renderer);
 
