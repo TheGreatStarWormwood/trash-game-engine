@@ -48,6 +48,8 @@ void draw_Text(SDL_Renderer *renderer, Text *text) {
   Message_rect.y = text->thing->y;      // controls the rect's y coordinte
   Message_rect.w = text->thing->width;  // controls the width of the rect
   Message_rect.h = text->thing->height; // controls the height of the rect
+
+  SDL_RenderCopy(renderer, Message, NULL, &Message_rect);
 }
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
