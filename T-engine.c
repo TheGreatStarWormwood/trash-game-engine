@@ -1,6 +1,6 @@
-
-
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_scancode.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 
 #define MAX_THINGS 100
@@ -15,8 +15,15 @@ typedef struct {
 } Thing;
 
 typedef struct {
+  Thing *thing;
+  char text[];
+} Text;
+
+typedef struct {
   Thing things[MAX_THINGS]; // list of things
   int thing_count;          // nb of active things
+  Text texts[MAX_THINGS];
+  int text_count;
 
   // user input states
   int key_up, key_down, key_left, key_right;
@@ -26,6 +33,22 @@ typedef struct {
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
+
+void draw_Text(SDL_Renderer *renderer, Text *text) {
+  TTF_Font *Sans = TTF_OpenFont("Sans.ttf", 24);
+
+  SDL_Color White = {255, 255, 255};
+
+  SDL_Surface *surfaceMessage = TTF_RenderText_Solid(Sans, text->text, White);
+
+  SDL_Texture *Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+
+  SDL_Rect Message_rect;                // create a rect
+  Message_rect.x = text->thing->x;      // controls the rect's x coordinate
+  Message_rect.y = text->thing->y;      // controls the rect's y coordinte
+  Message_rect.w = text->thing->width;  // controls the width of the rect
+  Message_rect.h = text->thing->height; // controls the height of the rect
+}
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
                     int height) {
@@ -88,13 +111,13 @@ void handle_input(GameState *game) {
 
     printf("\n~~~~~~~~~~~~~~~~\nInputs:");
     const Uint8 *state = SDL_GetKeyboardState(NULL);
-    game->key_up = state[SDL_SCANCODE_UP];
+    game->key_up = state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_W];
     printf("key_up:%d\n", game->key_up);
-    game->key_down = state[SDL_SCANCODE_DOWN];
+    game->key_down = state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_S];
     printf("key_down:%d\n", game->key_down);
-    game->key_left = state[SDL_SCANCODE_LEFT];
+    game->key_left = state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_A];
     printf("key_left:%d\n", game->key_left);
-    game->key_right = state[SDL_SCANCODE_RIGHT];
+    game->key_right = state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D];
     printf("key_right:%d\n", game->key_right);
 
     if (event.type == SDL_MOUSEMOTION) {
@@ -109,6 +132,8 @@ void handle_input(GameState *game) {
     }
   }
 }
+
+void destroy_thing(GameState *game, Thing *thing) {}
 
 void game_loop(GameState *game, SDL_Renderer *renderer) {
   while (1) {

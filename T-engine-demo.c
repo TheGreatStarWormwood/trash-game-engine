@@ -1,5 +1,43 @@
 #include "T-engine.c"
-#include <threads.h>
+
+#define PLAYER 1
+#define CURSOR 2
+#define PROJ 3
+
+void shoot(GameState *game, Thing *thing, int mouse_x, int mouse_y) {
+  float vx = mouse_x - thing->x;
+  float vy = mouse_y - thing->y;
+
+  double magnitude = sqrt((double)(vx * vx + vy * vy));
+  if (magnitude != 0) {
+    vx = (vx / magnitude) * 1000;
+    vy = (vy / magnitude) * 1000;
+  } else {
+    vx = 0;
+    vy = 0;
+  }
+
+  add_thing(game, thing->x, thing->y, 2, 2, vx, vy, PROJ);
+}
+
+void update_Bullet(void *pgame, Thing *thing, float life) {
+
+  GameState *game = (GameState *)pgame;
+
+  if (thing->x >= 800 - thing->width) {
+    thing->x = 800 - thing->width;
+  }
+  if (thing->x <= 0) {
+    thing->x = 0;
+  }
+
+  if (thing->y >= 600 - thing->height) {
+    thing->y = 600 - thing->height;
+  }
+  if (thing->y <= 0) {
+    thing->y = 0;
+  }
+}
 
 void player_Update(void *pgame, Thing *thing, float delta_time) {
 
@@ -21,6 +59,10 @@ void player_Update(void *pgame, Thing *thing, float delta_time) {
     thing->vx = -500;
   } else {
     thing->vx /= 1.1;
+  }
+
+  if (game->mouse_button_pressed) {
+    shoot(game, thing, game->mouse_x, game->mouse_y);
   }
 
   if (thing->x >= 800 - thing->width) {
@@ -54,6 +96,9 @@ void update(void *pgame, Thing *thing, float delta_time) {
   case 2:
     cursor_Update(pgame, thing, delta_time);
     break;
+  case 3:
+    update_Bullet((GameState *)pgame, thing, 1.0f);
+    break;
   }
 }
 
@@ -82,8 +127,8 @@ int main() {
 
   GameState game = {0};
 
-  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, 1);
-  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, 2);
+  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER);
+  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR);
 
   game.on_update = update;
 
