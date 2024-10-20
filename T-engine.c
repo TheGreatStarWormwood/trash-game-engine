@@ -20,8 +20,8 @@ typedef struct {
 } Text;
 
 typedef struct {
-  Thing things[MAX_THINGS]; // list of things
-  int thing_count;          // nb of active things
+  Thing **things;  // list of things
+  int thing_count; // nb of active things
   Text texts[MAX_THINGS];
   int text_count;
 
@@ -67,7 +67,7 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
   SDL_RenderClear(renderer);
 
   for (int i = 0; i < game->thing_count; i++) {
-    Thing *obj = &game->things[i];
+    Thing *obj = game->things[i];
     draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height);
   }
 
@@ -79,7 +79,7 @@ void add_thing(GameState *game, int x, int y, int width, int height, float vx,
   if (game->thing_count >= MAX_THINGS)
     return;
 
-  Thing *obj = &game->things[game->thing_count++];
+  Thing *obj = game->things[game->thing_count++];
   obj->id = game->thing_count;
   obj->type_id = tid;
   obj->x = x;
@@ -92,7 +92,7 @@ void add_thing(GameState *game, int x, int y, int width, int height, float vx,
 
 void update_objects(GameState *game, float delta_time) {
   for (int i = 0; i < game->thing_count; i++) {
-    Thing *thing = &game->things[i];
+    Thing *thing = game->things[i];
     thing->x += thing->vx * delta_time;
     thing->y += thing->vy * delta_time;
 
@@ -131,6 +131,48 @@ void handle_input(GameState *game) {
       game->mouse_button_pressed = 0;
     }
   }
+}
+
+Thing *malloc_Thing() {
+
+  Thing *thing = malloc(sizeof(Thing));
+
+  if (thing == NULL) {
+    return NULL;
+  }
+
+  thing->id = 0;
+  thing->type_id = 1;
+  thing->x = 0.0f;
+  thing->y = 0.0f;
+  thing->vx = 0.0f;
+  thing->vy = 0.0f;
+  thing->width = 10;
+  thing->height = 10;
+  thing->custom_Properies = NULL;
+
+  return thing;
+}
+
+GameState *malloc_GameState() {
+  GameState *game = malloc(sizeof(GameState));
+
+  if (game == NULL) {
+    return NULL;
+  }
+
+  memset(game, 0, sizeof(GameState));
+  game->things = malloc(sizeof(Thing *) * MAX_THINGS);
+
+  if (game->things == NULL) {
+    return NULL;
+  }
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    game->things[i] = malloc_Thing();
+  }
+
+  return game;
 }
 
 void destroy_thing(GameState *game, Thing *thing) {}

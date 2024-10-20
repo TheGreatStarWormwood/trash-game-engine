@@ -1,4 +1,5 @@
 #include "T-engine.c"
+#include <linux/limits.h>
 
 #define PLAYER 1
 #define CURSOR 2
@@ -125,14 +126,14 @@ int main() {
     return 1;
   }
 
-  GameState game = {0};
+  GameState *game = malloc_GameState();
 
-  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER);
-  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR);
+  add_thing(game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER);
+  add_thing(game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR);
 
-  game.on_update = update;
+  game->on_update = update;
 
-  game_loop(&game, renderer);
+  game_loop(game, renderer);
 
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(win);
