@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #define MAX_THINGS 100
+#define DEFAULT_TYPE 0
 
 typedef struct {
   int id;            // unique ID for each thing
@@ -33,22 +34,6 @@ typedef struct {
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
-
-void draw_Text(SDL_Renderer *renderer, Text *text) {
-  TTF_Font *Sans = TTF_OpenFont("Sans.ttf", 24);
-
-  SDL_Color White = {255, 255, 255};
-
-  SDL_Surface *surfaceMessage = TTF_RenderText_Solid(Sans, text->text, White);
-
-  SDL_Texture *Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
-
-  SDL_Rect Message_rect;                // create a rect
-  Message_rect.x = text->thing->x;      // controls the rect's x coordinate
-  Message_rect.y = text->thing->y;      // controls the rect's y coordinte
-  Message_rect.w = text->thing->width;  // controls the width of the rect
-  Message_rect.h = text->thing->height; // controls the height of the rect
-}
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
                     int height) {

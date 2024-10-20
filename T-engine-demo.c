@@ -1,8 +1,8 @@
 #include "T-engine.c"
 
-#define PLAYER 1
-#define CURSOR 2
-#define PROJ 3
+#define PLAYER_TYPE 5
+#define CURSOR_TYPE 6
+#define BULLET_TYPE 7
 
 void shoot(GameState *game, Thing *thing, int mouse_x, int mouse_y) {
   float vx = mouse_x - thing->x;
@@ -17,7 +17,7 @@ void shoot(GameState *game, Thing *thing, int mouse_x, int mouse_y) {
     vy = 0;
   }
 
-  add_thing(game, thing->x, thing->y, 2, 2, vx, vy, PROJ);
+  add_thing(game, thing->x, thing->y, 2, 2, vx, vy, BULLET_TYPE);
 }
 
 void update_Bullet(void *pgame, Thing *thing, float life) {
@@ -90,13 +90,13 @@ void cursor_Update(void *pgame, Thing *thing, float delta_time) {
 
 void update(void *pgame, Thing *thing, float delta_time) {
   switch (thing->type_id) {
-  case 1:
+  case PLAYER_TYPE:
     player_Update(pgame, thing, delta_time);
     break;
-  case 2:
+  case CURSOR_TYPE:
     cursor_Update(pgame, thing, delta_time);
     break;
-  case 3:
+  case BULLET_TYPE:
     update_Bullet((GameState *)pgame, thing, 1.0f);
     break;
   }
@@ -127,8 +127,8 @@ int main() {
 
   GameState game = {0};
 
-  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER);
-  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR);
+  add_thing(&game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER_TYPE);
+  add_thing(&game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR_TYPE);
 
   game.on_update = update;
 
