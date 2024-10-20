@@ -2,6 +2,7 @@
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdio.h>
+#include <time.h>
 
 #define MAX_THINGS 100
 
@@ -20,10 +21,10 @@ typedef struct {
 } Text;
 
 typedef struct {
-  Thing **things;  // list of things
-  int thing_count; // nb of active things
-  Text texts[MAX_THINGS];
-  int text_count;
+  Thing **things;          // list of things
+  int thing_count;         // nb of active things
+  int *available_Indicies; // keep track of empty indicies in **things
+  int av_i_count;          // nb of empty indicies
 
   // user input states
   int key_up, key_down, key_left, key_right;
@@ -33,6 +34,95 @@ typedef struct {
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
+
+void print_thing_ids(GameState *game) {
+  printf("Active Thing IDs:\n");
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *thing = game->things[i];
+    if (thing != NULL) {
+      printf("Thing ID: %d\n", thing->id);
+    } else {
+      printf("NULL Thing at index: %d\n", i);
+    }
+  }
+}
+
+Thing *malloc_Thing() {
+
+  Thing *thing = malloc(sizeof(Thing));
+
+  if (thing == NULL) {
+    return NULL;
+  }
+
+  thing->id = -1;
+  thing->type_id = -1;
+  thing->x = 0.0f;
+  thing->y = 0.0f;
+  thing->vx = 0.0f;
+  thing->vy = 0.0f;
+  thing->width = 10;
+  thing->height = 10;
+  thing->custom_Properies = NULL;
+
+  return thing;
+}
+
+GameState *malloc_GameState() {
+  GameState *game = malloc(sizeof(GameState));
+
+  if (game == NULL) {
+    return NULL;
+  }
+
+  memset(game, 0, sizeof(GameState));
+  game->things = malloc(sizeof(Thing *) * MAX_THINGS);
+  game->available_Indicies = malloc(sizeof(int) * MAX_THINGS);
+  game->av_i_count = MAX_THINGS;
+
+  if (game->things == NULL) {
+    return NULL;
+  }
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    game->things[i] = NULL;
+    game->available_Indicies[i] = i;
+  }
+
+  return game;
+}
+
+int add_thing(GameState *game, int x, int y, int width, int height, float vx,
+              float vy, int tid) {
+  if (game->thing_count >= MAX_THINGS)
+    return -1;
+
+  if (game->av_i_count == 0) {
+    return -1;
+  }
+
+  int index = game->available_Indicies[--game->av_i_count];
+
+  Thing *obj = game->things[index];
+
+  if (obj == NULL) {
+    obj = malloc_Thing(); // Allocate a new Thing if the pointer is NULL
+    game->things[index] = obj;
+  }
+  game->thing_count++;
+  obj->id = index;
+  obj->type_id = tid;
+  obj->x = x;
+  obj->y = y;
+  obj->vx = vx;
+  obj->vy = vy;
+  obj->width = width;
+  obj->height = height;
+
+  // printf("index: %d\n", game->av_i_count);
+  // printf("id of added object: %d\n", obj->id);
+  return -1;
+}
 
 void draw_Text(SDL_Renderer *renderer, Text *text) {
   TTF_Font *Sans = TTF_OpenFont("Sans.ttf", 24);
@@ -53,8 +143,8 @@ void draw_Text(SDL_Renderer *renderer, Text *text) {
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
                     int height) {
   SDL_Rect rect;
-  rect.x = (int)x;
-  rect.y = (int)y;
+  rect.x = (int)x - width / 2;
+  rect.y = (int)y - height / 2;
   rect.w = width;
   rect.h = height;
 
@@ -65,34 +155,24 @@ void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
 void render_objects(GameState *game, SDL_Renderer *renderer) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
-
-  for (int i = 0; i < game->thing_count; i++) {
+  for (int i = 0; i < MAX_THINGS; i++) {
     Thing *obj = game->things[i];
+    if (obj == NULL || obj->id == -1) {
+      continue;
+    }
+    // printf("drawing object of id: %d\n", obj->id);
     draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height);
   }
 
   SDL_RenderPresent(renderer);
 }
 
-void add_thing(GameState *game, int x, int y, int width, int height, float vx,
-               float vy, int tid) {
-  if (game->thing_count >= MAX_THINGS)
-    return;
-
-  Thing *obj = game->things[game->thing_count++];
-  obj->id = game->thing_count;
-  obj->type_id = tid;
-  obj->x = x;
-  obj->y = y;
-  obj->vx = vx;
-  obj->vy = vy;
-  obj->width = width;
-  obj->height = height;
-}
-
 void update_objects(GameState *game, float delta_time) {
-  for (int i = 0; i < game->thing_count; i++) {
+  for (int i = 0; i < MAX_THINGS; i++) {
     Thing *thing = game->things[i];
+    if (thing == NULL) {
+      continue;
+    }
     thing->x += thing->vx * delta_time;
     thing->y += thing->vy * delta_time;
 
@@ -133,49 +213,13 @@ void handle_input(GameState *game) {
   }
 }
 
-Thing *malloc_Thing() {
-
-  Thing *thing = malloc(sizeof(Thing));
-
-  if (thing == NULL) {
-    return NULL;
-  }
-
-  thing->id = 0;
-  thing->type_id = 1;
-  thing->x = 0.0f;
-  thing->y = 0.0f;
-  thing->vx = 0.0f;
-  thing->vy = 0.0f;
-  thing->width = 10;
-  thing->height = 10;
-  thing->custom_Properies = NULL;
-
-  return thing;
+void destroy_thing(GameState *game, Thing *thing) {
+  int index = thing->id;
+  printf("destroying thing of index: %d\n", index);
+  game->things[index] = NULL;
+  game->available_Indicies[game->av_i_count++] = index;
+  game->thing_count--;
 }
-
-GameState *malloc_GameState() {
-  GameState *game = malloc(sizeof(GameState));
-
-  if (game == NULL) {
-    return NULL;
-  }
-
-  memset(game, 0, sizeof(GameState));
-  game->things = malloc(sizeof(Thing *) * MAX_THINGS);
-
-  if (game->things == NULL) {
-    return NULL;
-  }
-
-  for (int i = 0; i < MAX_THINGS; i++) {
-    game->things[i] = malloc_Thing();
-  }
-
-  return game;
-}
-
-void destroy_thing(GameState *game, Thing *thing) {}
 
 void game_loop(GameState *game, SDL_Renderer *renderer) {
   while (1) {

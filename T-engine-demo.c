@@ -26,17 +26,17 @@ void update_Bullet(void *pgame, Thing *thing, float life) {
   GameState *game = (GameState *)pgame;
 
   if (thing->x >= 800 - thing->width) {
-    thing->x = 800 - thing->width;
+    destroy_thing(game, thing);
   }
   if (thing->x <= 0) {
-    thing->x = 0;
+    destroy_thing(game, thing);
   }
 
   if (thing->y >= 600 - thing->height) {
-    thing->y = 600 - thing->height;
+    destroy_thing(game, thing);
   }
   if (thing->y <= 0) {
-    thing->y = 0;
+    destroy_thing(game, thing);
   }
 }
 
@@ -128,10 +128,12 @@ int main() {
 
   GameState *game = malloc_GameState();
 
-  add_thing(game, 100, 100, 20, 20, 0.0f, 0.0f, PLAYER);
+  add_thing(game, 500, 500, 20, 20, 0.0f, 0.0f, PLAYER);
   add_thing(game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR);
 
   game->on_update = update;
+
+  // print_thing_ids(game);
 
   game_loop(game, renderer);
 
