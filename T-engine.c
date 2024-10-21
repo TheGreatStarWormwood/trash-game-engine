@@ -5,20 +5,27 @@
 #include <time.h>
 
 #define MAX_THINGS 100
+#define DEFAULT_TYPE 0
+#define RAYCAST_TYPE 1
 
 typedef struct {
   int id;            // unique ID for each thing
   int type_id;       // id to identify different types of things
   float x, y;        // position
   float vx, vy;      // velocity
-  int width, height; // size
-  void *custom_Properies;
+  int width, height; // also use for bounding box purpoess
+  void *custom_Properties;
 } Thing;
 
 typedef struct {
   Thing *thing;
   char text[];
 } Text;
+
+typedef struct {
+  float dx, dy;
+  float length;
+} Raycast;
 
 typedef struct {
   Thing **things;          // list of things
@@ -47,6 +54,18 @@ void print_thing_ids(GameState *game) {
   }
 }
 
+void normalize_Vector(float *vx, float *vy) {
+
+  double magnitude = sqrt((double)(*vx * *vx + *vy * *vy));
+  if (magnitude != 0) {
+    *vx = (*vx / magnitude);
+    *vy = (*vy / magnitude);
+  } else {
+    *vx = 0;
+    *vy = 0;
+  }
+}
+
 Thing *malloc_Thing() {
 
   Thing *thing = malloc(sizeof(Thing));
@@ -63,7 +82,7 @@ Thing *malloc_Thing() {
   thing->vy = 0.0f;
   thing->width = 10;
   thing->height = 10;
-  thing->custom_Properies = NULL;
+  thing->custom_Properties = NULL;
 
   return thing;
 }
@@ -92,13 +111,13 @@ GameState *malloc_GameState() {
   return game;
 }
 
-int add_thing(GameState *game, int x, int y, int width, int height, float vx,
-              float vy, int tid) {
+Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
+                 float vy, int tid) {
   if (game->thing_count >= MAX_THINGS)
-    return -1;
+    return NULL;
 
   if (game->av_i_count == 0) {
-    return -1;
+    return NULL;
   }
 
   int index = game->available_Indicies[--game->av_i_count];
@@ -121,7 +140,7 @@ int add_thing(GameState *game, int x, int y, int width, int height, float vx,
 
   // printf("index: %d\n", game->av_i_count);
   // printf("id of added object: %d\n", obj->id);
-  return -1;
+  return obj;
 }
 
 void draw_Text(SDL_Renderer *renderer, Text *text) {
@@ -167,6 +186,40 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
   SDL_RenderPresent(renderer);
 }
 
+int check_boundingbox_Collision(Thing *A, Thing *B) {}
+
+int ray_intersects_bounding_box(Thing *source, Raycast *ray, Thing *target) {
+  float x_min = target->x;
+  float x_max = target->x + target->width;
+  float y_min = target->y;
+  float y_max = target->y + target->height;
+
+  float ray_origin_x = source->x;
+  float ray_origin_y = source->y;
+
+  float t1 = (x_min - ray_origin_x) / ray->dx;
+  float t2 = (x_max - ray_origin_x) / ray->dx;
+  float t3 = (y_min - ray_origin_y) / ray->dy;
+  float t4 = (y_max - ray_origin_y) / ray->dy;
+
+  float t_min = fmax(fmin(t1, t2), fmin(t3, t4));
+  float t_max = fmin(fmax(t1, t2), fmax(t3, t4));
+
+  if (t_max < 0 || t_min > t_max) {
+    return 0; // no intersection
+  }
+
+  return 1; // intersection
+}
+
+void add_raycast_to_thing(Thing *thing, float dx, float dy, float length) {
+  Raycast *ray = (Raycast *)malloc(sizeof(Raycast));
+  ray->dx = dx;
+  ray->dy = dy;
+  ray->length = length;
+  thing->custom_Properties = ray; // Attach the raycast to the custom properties
+}
+
 void update_objects(GameState *game, float delta_time) {
   for (int i = 0; i < MAX_THINGS; i++) {
     Thing *thing = game->things[i];
@@ -189,16 +242,16 @@ void handle_input(GameState *game) {
       exit(0);
     }
 
-    printf("\n~~~~~~~~~~~~~~~~\nInputs:");
+    // printf("\n~~~~~~~~~~~~~~~~\nInputs:");
     const Uint8 *state = SDL_GetKeyboardState(NULL);
     game->key_up = state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_W];
-    printf("key_up:%d\n", game->key_up);
+    // printf("key_up:%d\n", game->key_up);
     game->key_down = state[SDL_SCANCODE_DOWN] || state[SDL_SCANCODE_S];
-    printf("key_down:%d\n", game->key_down);
+    // printf("key_down:%d\n", game->key_down);
     game->key_left = state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_A];
-    printf("key_left:%d\n", game->key_left);
+    // printf("key_left:%d\n", game->key_left);
     game->key_right = state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D];
-    printf("key_right:%d\n", game->key_right);
+    // printf("key_right:%d\n", game->key_right);
 
     if (event.type == SDL_MOUSEMOTION) {
       game->mouse_x = event.motion.x;
@@ -216,6 +269,10 @@ void handle_input(GameState *game) {
 void destroy_thing(GameState *game, Thing *thing) {
   int index = thing->id;
   printf("destroying thing of index: %d\n", index);
+  // if (game->things[index] != NULL) {
+  //   free(game->things[index]);
+  // }
+
   game->things[index] = NULL;
   game->available_Indicies[game->av_i_count++] = index;
   game->thing_count--;
