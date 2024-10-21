@@ -1,5 +1,6 @@
 #include "T-engine.c"
 #include <linux/limits.h>
+#include <time.h>
 
 #define PLAYER_TYPE 5
 #define CURSOR_TYPE 6
@@ -26,6 +27,21 @@ void chase_Player(GameState *game, Thing *thing) {
 
   raycast->dx = vx;
   raycast->dy = vy;
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *other = game->things[i];
+    if (other == NULL) {
+      continue;
+    }
+    if (check_bounding_box_collision(thing, other)) {
+      if (other->type_id == PLAYER_TYPE) {
+        other->color[0] = 100;
+      }
+      if (other->type_id == BULLET_TYPE) {
+        thing->color[0] = 100;
+      }
+    }
+  }
 }
 
 void shoot(GameState *game, Thing *thing, int mouse_x, int mouse_y) {
@@ -34,7 +50,8 @@ void shoot(GameState *game, Thing *thing, int mouse_x, int mouse_y) {
 
   normalize_Vector(&vx, &vy);
 
-  add_thing(game, thing->x, thing->y, 2, 2, vx * 1000, vy * 1000, BULLET_TYPE);
+  add_thing(game, thing->x, thing->y, 2, 2, vx * 1000, vy * 1000, BULLET_TYPE,
+            250, 250, 250, 255);
 }
 
 void update_Bullet(void *pgame, Thing *thing, float life) {
@@ -150,9 +167,11 @@ int main() {
 
   GameState *game = malloc_GameState();
 
-  add_thing(game, WIDTH / 2, HEIGHT / 2, 20, 20, 0.0f, 0.0f, PLAYER_TYPE);
-  add_thing(game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR_TYPE);
-  Thing *zombie = add_thing(game, 500, 500, 10, 10, 0.0f, 0.0f, 8);
+  add_thing(game, WIDTH / 2, HEIGHT / 2, 20, 20, 0.0f, 0.0f, PLAYER_TYPE, 255,
+            0, 0, 255);
+  add_thing(game, 100, 100, 10, 10, 0.0f, 0.0f, CURSOR_TYPE, 100, 100, 0, 255);
+  Thing *zombie =
+      add_thing(game, 500, 500, 10, 10, 0.0f, 0.0f, 8, 255, 255, 0, 255);
   add_raycast_to_thing(zombie, 0, 10, 100);
 
   game->on_update = update;

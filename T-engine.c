@@ -14,6 +14,7 @@ typedef struct {
   float x, y;        // position
   float vx, vy;      // velocity
   int width, height; // also use for bounding box purpoess
+  int color[4];
   void *custom_Properties;
 } Thing;
 
@@ -112,7 +113,7 @@ GameState *malloc_GameState() {
 }
 
 Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
-                 float vy, int tid) {
+                 float vy, int tid, int r, int g, int b, int a) {
   if (game->thing_count >= MAX_THINGS)
     return NULL;
 
@@ -137,6 +138,10 @@ Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
   obj->vy = vy;
   obj->width = width;
   obj->height = height;
+  obj->color[0] = r;
+  obj->color[1] = g;
+  obj->color[2] = b;
+  obj->color[3] = a;
 
   // printf("index: %d\n", game->av_i_count);
   // printf("id of added object: %d\n", obj->id);
@@ -160,14 +165,14 @@ void draw_Text(SDL_Renderer *renderer, Text *text) {
 }
 
 void draw_rectangle(SDL_Renderer *renderer, float x, float y, int width,
-                    int height) {
+                    int height, int color[4]) {
   SDL_Rect rect;
   rect.x = (int)x - width / 2;
   rect.y = (int)y - height / 2;
   rect.w = width;
   rect.h = height;
 
-  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+  SDL_SetRenderDrawColor(renderer, color[0], color[1], color[2], color[3]);
   SDL_RenderFillRect(renderer, &rect);
 }
 
@@ -180,13 +185,17 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
       continue;
     }
     // printf("drawing object of id: %d\n", obj->id);
-    draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height);
+    draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height,
+                   obj->color);
   }
 
   SDL_RenderPresent(renderer);
 }
 
-int check_boundingbox_Collision(Thing *A, Thing *B) {}
+int check_bounding_box_collision(Thing *a, Thing *b) {
+  return (a->x < b->x + b->width && a->x + a->width > b->x &&
+          a->y < b->y + b->height && a->y + a->height > b->y);
+}
 
 int ray_intersects_bounding_box(Thing *source, Raycast *ray, Thing *target) {
   float x_min = target->x;
@@ -268,7 +277,7 @@ void handle_input(GameState *game) {
 
 void destroy_thing(GameState *game, Thing *thing) {
   int index = thing->id;
-  printf("destroying thing of index: %d\n", index);
+  // printf("destroying thing of index: %d\n", index);
   // if (game->things[index] != NULL) {
   //   free(game->things[index]);
   // }
