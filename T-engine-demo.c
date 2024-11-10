@@ -34,13 +34,12 @@ void chase_Player(GameState *game, Thing *thing) {
       continue;
     }
     if (check_bounding_box_collision(thing, other)) {
-      if (other->type_id == PLAYER_TYPE) {
-        other->color[0] = 100;
-      }
       if (other->type_id == BULLET_TYPE) {
         thing->color[0] = 100;
+        break;
       }
     }
+    thing->color[0] = 255;
   }
 }
 
@@ -114,6 +113,20 @@ void player_Update(void *pgame, Thing *thing, float delta_time) {
   }
   player_x = thing->x;
   player_y = thing->y;
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *other = game->things[i];
+    if (other == NULL) {
+      continue;
+    }
+    if (check_bounding_box_collision(thing, other)) {
+      if (other->type_id == ZOMBIE_TYPE) {
+        thing->color[0] = 100;
+        break;
+      }
+    }
+    thing->color[0] = 255;
+  }
 }
 
 void cursor_Update(void *pgame, Thing *thing, float delta_time) {
