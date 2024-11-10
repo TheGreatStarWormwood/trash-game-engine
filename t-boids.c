@@ -1,20 +1,118 @@
 
 #include "T-engine.c"
-#include <string.h>
 
 #define WIDTH 640
 #define HEIGHT 480
 
-void spawn_Boids(void *game) {}
+#define BOID_COUNT 50
+
+#define RULE1_INF 250.0
+#define RULE2_INF 20.0
+#define RULE3_INF 50.0
+
+int rule1(GameState *game, Thing *thing) {
+  Tvector centrom = {0.0, 0.0};
+  int count = 0;
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *other = game->things[i];
+    if (other == NULL || i == thing->id) {
+      continue;
+    }
+    centrom.x += other->x;
+    centrom.y += other->y;
+    count++;
+  }
+
+  if (count > 0) {
+    centrom.x /= count;
+    centrom.y /= count;
+  }
+
+  thing->vx += (centrom.x - thing->x) / RULE1_INF;
+  thing->vy += (centrom.y - thing->y) / RULE1_INF;
+
+  return 0;
+}
+
+int rule2(GameState *game, Thing *thing) {
+
+  Tvector vector = {0.0, 0.0};
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *other = game->things[i];
+    if (other == NULL || i == thing->id) {
+      continue;
+    }
+
+    float distance = calc_distance(thing->x, thing->y, other->x, other->y);
+
+    if (distance < 30) {
+      thing->color[1] = 255;
+      vector.x -= other->x - thing->x;
+      vector.y -= other->y - thing->y;
+    } else {
+      thing->color[1] = 0;
+    }
+  }
+
+  thing->vx += vector.x / RULE2_INF;
+  thing->vy += vector.y / RULE2_INF;
+
+  return 0;
+}
+
+int rule3(GameState *game, Thing *thing) {
+  Tvector centrom = {0.0, 0.0};
+  int count = 0;
+
+  for (int i = 0; i < MAX_THINGS; i++) {
+    Thing *other = game->things[i];
+    if (other == NULL || i == thing->id) {
+      continue;
+    }
+    centrom.x += other->vx;
+    centrom.y += other->vy;
+    count++;
+  }
+
+  if (count > 0) {
+    centrom.x /= count;
+    centrom.y /= count;
+  }
+
+  thing->vx += (centrom.x - thing->vx) / RULE3_INF;
+  thing->vy += (centrom.y - thing->vy) / RULE3_INF;
+
+  return 0;
+}
 
 void update_boids(void *pgame, Thing *thing, float delta_time) {
 
   GameState *game = (GameState *)pgame;
 
-  int *v1, *v2, *v3;
-  memset(v1, 0, sizeof(int) * 2);
-  memset(v2, 0, sizeof(int) * 2);
-  memset(v3, 0, sizeof(int) * 2);
+  rule1(game, thing);
+  rule2(game, thing);
+  rule3(game, thing);
+}
+
+float random_float(float min, float max) {
+  return min + (rand() / (float)RAND_MAX) * (max - min);
+}
+
+void generate_random_coordinates(float width, float height, float *x,
+                                 float *y) {
+  *x = random_float(0, width);
+  *y = random_float(0, height);
+}
+
+void spawn_Boids(void *game) {
+  for (int i = 0; i < BOID_COUNT; i++) {
+    float *x = malloc(sizeof(int));
+    float *y = malloc(sizeof(int));
+    generate_random_coordinates(WIDTH, HEIGHT, x, y);
+    add_thing(game, *x, *y, 5, 5, random_float(0, 50), random_float(0, 50), 6, 255, 0, 0, 255);
+  }
 }
 
 int main() {
@@ -42,7 +140,7 @@ int main() {
 
   GameState *game = malloc_GameState();
 
-  add_thing(game, WIDTH / 2, HEIGHT / 2, 5, 15, 0, -1, 6, 255, 255, 255, 255);
+  spawn_Boids(game);
 
   game->on_update = update_boids;
 

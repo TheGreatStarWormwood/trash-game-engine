@@ -9,6 +9,11 @@
 #define RAYCAST_TYPE 1
 
 typedef struct {
+  float x;
+  float y;
+} Tvector;
+
+typedef struct {
   int id;            // unique ID for each thing
   int type_id;       // id to identify different types of things
   float x, y;        // position
@@ -42,6 +47,18 @@ typedef struct {
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
+
+Tvector *malloc_Tvector() {
+  Tvector *vec = malloc(sizeof(Tvector));
+  vec->x = 0;
+  vec->y = 0;
+
+  return vec;
+}
+
+float calc_distance(float x1, float y1, float x2, float y2) {
+  return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
 
 void print_thing_ids(GameState *game) {
   printf("Active Thing IDs:\n");
