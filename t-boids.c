@@ -1,26 +1,41 @@
 
 #include "T-engine.c"
+#include <SDL2/SDL_pixels.h>
 
-#define WIDTH 640
-#define HEIGHT 480
+#define WIDTH 1500
+#define HEIGHT 900
 
-#define BOID_COUNT 50
+#define BOID_COUNT 20
 
-#define RULE1_INF 250.0
-#define RULE2_INF 20.0
-#define RULE3_INF 50.0
+#define RULE1_INF 2000.0
+
+#define RULE2_INF 70.0
+#define RULE2_DIST 30
+
+#define RULE3_INF 150.0
+
+#define SPEED_MAX 50
+#define SPEED_MIN 20
 
 int rule1(GameState *game, Thing *thing) {
   Tvector centrom = {0.0, 0.0};
   int count = 0;
+  float total_Weight = 0;
 
   for (int i = 0; i < MAX_THINGS; i++) {
     Thing *other = game->things[i];
     if (other == NULL || i == thing->id) {
       continue;
     }
-    centrom.x += other->x;
-    centrom.y += other->y;
+
+    float distance = calc_distance(other->x, other->y, thing->x, thing->y);
+
+    float weight = 1.0f / distance;
+
+    total_Weight += weight;
+
+    centrom.x += other->x * weight;
+    centrom.y += other->y * weight;
     count++;
   }
 
@@ -47,7 +62,7 @@ int rule2(GameState *game, Thing *thing) {
 
     float distance = calc_distance(thing->x, thing->y, other->x, other->y);
 
-    if (distance < 30) {
+    if (distance < RULE2_DIST) {
       thing->color[1] = 255;
       vector.x -= other->x - thing->x;
       vector.y -= other->y - thing->y;
@@ -94,6 +109,39 @@ void update_boids(void *pgame, Thing *thing, float delta_time) {
   rule1(game, thing);
   rule2(game, thing);
   rule3(game, thing);
+
+  thing->x += thing->vx * delta_time;
+  thing->y += thing->vy * delta_time;
+
+  float speed = sqrt(thing->vx * thing->vx + thing->vy * thing->vy);
+
+  if (speed > SPEED_MAX) {
+    thing->color[2] = 255;
+    thing->vx = (thing->vx / speed) * SPEED_MAX;
+    thing->vy = (thing->vy / speed) * SPEED_MAX;
+  } else if (speed < SPEED_MIN) {
+    thing->color[2] = 255;
+    thing->vx = (thing->vx / speed) * SPEED_MIN;
+    thing->vy = (thing->vy / speed) * SPEED_MIN;
+  } else {
+    thing->color[2] = 0;
+  }
+
+  if (thing->x < 0) {
+    thing->x = 0;
+    thing->vx = -thing->vx;
+  } else if (thing->x > WIDTH) {
+    thing->x = WIDTH;
+    thing->vx = -thing->vx;
+  }
+
+  if (thing->y < 0) {
+    thing->y = 0;
+    thing->vy = -thing->vy;
+  } else if (thing->y > HEIGHT) {
+    thing->y = HEIGHT;
+    thing->vy = -thing->vy;
+  }
 }
 
 float random_float(float min, float max) {
@@ -111,7 +159,10 @@ void spawn_Boids(void *game) {
     float *x = malloc(sizeof(int));
     float *y = malloc(sizeof(int));
     generate_random_coordinates(WIDTH, HEIGHT, x, y);
-    add_thing(game, *x, *y, 5, 5, random_float(0, 50), random_float(0, 50), 6, 255, 0, 0, 255);
+    add_thing(game, *x, *y, 5, 5, random_float(0, 50), random_float(0, 50), 6,
+              255, 0, 0, 255);
+    free(x);
+    free(y);
   }
 }
 
