@@ -1,9 +1,6 @@
 
+-USE A GRID THINGIE TO OPTIMIZE CHECKING COLLISIONS
 
-
-- add lifespans
-- make user side things 
+- add lifespans with timers
 - add rotation
 - write optimal math functions for vector math
-- add collision using Separating Axis Theorem
-- kill objects and handle empty space
