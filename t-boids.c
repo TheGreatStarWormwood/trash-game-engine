@@ -5,9 +5,9 @@
 #define WIDTH 1500
 #define HEIGHT 900
 
-#define BOID_COUNT 20
+#define BOID_COUNT 40
 
-#define RULE1_INF 2000.0
+#define RULE1_INF 4000.0
 
 #define RULE2_INF 70.0
 #define RULE2_DIST 30
@@ -16,6 +16,17 @@
 
 #define SPEED_MAX 50
 #define SPEED_MIN 20
+
+#define CENTERINFLUENCE 2000
+
+int center_inf(GameState *game, Thing *thing) {
+  Tvector center = {WIDTH / 2.0, HEIGHT / 2.0};
+
+  thing->vx += (center.x - thing->x) / CENTERINFLUENCE;
+  thing->vy += (center.y - thing->y) / CENTERINFLUENCE;
+
+  return 0;
+}
 
 int rule1(GameState *game, Thing *thing) {
   Tvector centrom = {0.0, 0.0};
@@ -106,6 +117,7 @@ void update_boids(void *pgame, Thing *thing, float delta_time) {
 
   GameState *game = (GameState *)pgame;
 
+  center_inf(game, thing);
   rule1(game, thing);
   rule2(game, thing);
   rule3(game, thing);
