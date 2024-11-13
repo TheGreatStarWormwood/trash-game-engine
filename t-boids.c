@@ -1,6 +1,5 @@
 
 #include "T-engine.c"
-#include <SDL2/SDL_pixels.h>
 
 #define WIDTH 1500
 #define HEIGHT 900
@@ -9,7 +8,7 @@
 
 #define RULE1_INF 4000.0
 
-#define RULE2_INF 70.0
+#define RULE2_INF 150.0
 #define RULE2_DIST 30
 
 #define RULE3_INF 150.0
