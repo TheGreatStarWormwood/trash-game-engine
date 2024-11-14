@@ -40,7 +40,6 @@ typedef struct {
   void (*on_update)(void *game, Thing *thing, float delta_time);
 } GameState;
 
-
 void print_thing_ids(GameState *game) {
   printf("Active Thing IDs:\n");
   for (int i = 0; i < MAX_THINGS; i++) {

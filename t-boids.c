@@ -19,16 +19,16 @@
 #define CENTERINFLUENCE 7000
 
 int center_inf(GameState *game, Thing *thing) {
-  Tvector center = {WIDTH / 2.0, HEIGHT / 2.0};
+  Tvector_t *center = create_vector(WIDTH / 2.0, HEIGHT / 2.0);
 
-  thing->vx += (center.x - thing->x) / CENTERINFLUENCE;
-  thing->vy += (center.y - thing->y) / CENTERINFLUENCE;
+  thing->vx += (center->x - thing->x) / CENTERINFLUENCE;
+  thing->vy += (center->y - thing->y) / CENTERINFLUENCE;
 
   return 0;
 }
 
 int rule1(GameState *game, Thing *thing) {
-  Tvector centrom = {0.0, 0.0};
+  Tvector_t *centrom = create_vector(0, 0);
   int count = 0;
   float total_Weight = 0;
 
@@ -48,25 +48,25 @@ int rule1(GameState *game, Thing *thing) {
 
     total_Weight += weight;
 
-    centrom.x += other->x * weight;
-    centrom.y += other->y * weight;
+    centrom->x += other->x * weight;
+    centrom->y += other->y * weight;
     count++;
   }
 
   if (count > 0) {
-    centrom.x /= count;
-    centrom.y /= count;
+    centrom->x /= count;
+    centrom->y /= count;
   }
 
-  thing->vx += (centrom.x - thing->x) / RULE1_INF;
-  thing->vy += (centrom.y - thing->y) / RULE1_INF;
+  thing->vx += (centrom->x - thing->x) / RULE1_INF;
+  thing->vy += (centrom->y - thing->y) / RULE1_INF;
 
   return 0;
 }
 
 int rule2(GameState *game, Thing *thing) {
 
-  Tvector vector = {0.0, 0.0};
+  Tvector_t *vector = create_vector(0, 0);
 
   for (int i = 0; i < MAX_THINGS; i++) {
     Thing *other = game->things[i];
@@ -82,21 +82,21 @@ int rule2(GameState *game, Thing *thing) {
 
     if (distance < RULE2_DIST) {
       thing->color[1] = 255;
-      vector.x -= other->x - thing->x;
-      vector.y -= other->y - thing->y;
+      vector->x -= other->x - thing->x;
+      vector->y -= other->y - thing->y;
     } else {
       thing->color[1] = 0;
     }
   }
 
-  thing->vx += vector.x / RULE2_INF;
-  thing->vy += vector.y / RULE2_INF;
+  thing->vx += vector->x / RULE2_INF;
+  thing->vy += vector->y / RULE2_INF;
 
   return 0;
 }
 
 int rule3(GameState *game, Thing *thing) {
-  Tvector centrom = {0.0, 0.0};
+  Tvector_t centrom = {0.0, 0.0};
   int count = 0;
 
   for (int i = 0; i < MAX_THINGS; i++) {
