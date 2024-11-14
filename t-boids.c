@@ -16,7 +16,7 @@
 #define SPEED_MAX 50
 #define SPEED_MIN 20
 
-#define CENTERINFLUENCE 2000
+#define CENTERINFLUENCE 7000
 
 int center_inf(GameState *game, Thing *thing) {
   Tvector center = {WIDTH / 2.0, HEIGHT / 2.0};
@@ -39,6 +39,10 @@ int rule1(GameState *game, Thing *thing) {
     }
 
     float distance = calc_distance(other->x, other->y, thing->x, thing->y);
+
+    if (distance > 500) {
+      continue;
+    }
 
     float weight = 1.0f / distance;
 
@@ -72,6 +76,10 @@ int rule2(GameState *game, Thing *thing) {
 
     float distance = calc_distance(thing->x, thing->y, other->x, other->y);
 
+    if (distance > 500) {
+      continue;
+    }
+
     if (distance < RULE2_DIST) {
       thing->color[1] = 255;
       vector.x -= other->x - thing->x;
@@ -96,6 +104,13 @@ int rule3(GameState *game, Thing *thing) {
     if (other == NULL || i == thing->id) {
       continue;
     }
+
+    float distance = calc_distance(thing->x, thing->y, other->x, other->y);
+
+    if (distance > 500) {
+      continue;
+    }
+
     centrom.x += other->vx;
     centrom.y += other->vy;
     count++;
