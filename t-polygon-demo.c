@@ -35,14 +35,15 @@ int main() {
   Vector vertices;
   vector_setup(&vertices, 2, sizeof(point));
 
-  vector_push_back(&vertices, create_point(10, 10));
-  vector_push_back(&vertices, create_point(10, 100));
-  // vector_push_back(&vertices, create_point(100, 100));
-  // vector_push_back(&vertices, create_point(100, 10));
-
+  vector_push_back(&vertices, create_point(0, -50));
+  vector_push_back(&vertices, create_point(20, 50));
+  vector_push_back(&vertices, create_point(-20, 50));
   Tpolygon *poly = create_polygon(&vertices);
 
-  rotate_points(poly, 90.0);
+  poly->center.x = WIDTH / 2.0;
+  poly->center.y = HEIGHT / 2.0;
+
+  rotate_points(poly, 45 * M_PI / 180.0);
 
   printf("center: %f, %f", poly->center.x, poly->center.y);
 

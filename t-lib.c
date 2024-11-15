@@ -22,7 +22,16 @@ typedef struct {
   point *vertices;
   int vert_count;
   point center;
+  double angle; // write in radian using M_PI
 } Tpolygon;
+
+float calc_distance(float x1, float y1, float x2, float y2) {
+  return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
+float get_angle_between_points(float x1, float y1, float x2, float y2) {
+  return atan2(y2 - y1, x2 - x1);
+}
 
 Tvector_t *malloc_Tvector() {
   Tvector_t *vec = malloc(sizeof(Tvector_t));
@@ -37,10 +46,6 @@ Tvector_t *create_vector(float x, float y) {
   vec->x = x;
   vec->y = y;
   return vec;
-}
-
-float calc_distance(float x1, float y1, float x2, float y2) {
-  return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
 Tpolygon *malloc_polygon() {
@@ -86,12 +91,12 @@ void free_polygon(Tpolygon *polygon) {
 }
 
 /*
-  polygon stuff modified from
+  polygon stuff modified for my C implementation from
   https://stackoverflow.com/a/49512921
 */
 
 int draw_filled_polygon(Tpolygon *poly, const SDL_Color color,
-                      SDL_Renderer *renderer) {
+                        SDL_Renderer *renderer) {
   float startX, endX, leftSlope = 0, rightSlope = 0;
   float cntY;
   int topCnt, leftCnt, rightCnt;

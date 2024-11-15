@@ -12,6 +12,7 @@ typedef struct {
   float vx, vy;      // velocity
   int width, height; // also use for bounding box purpoess
   int color[4];
+  Tpolygon *poly;
   void *custom_Properties;
 } Thing;
 
@@ -38,6 +39,7 @@ typedef struct {
 
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
+  void (*on_update_renderer)(void *game, Thing *thing);
 } GameState;
 
 void print_thing_ids(GameState *game) {
@@ -177,13 +179,31 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
   for (int i = 0; i < MAX_THINGS; i++) {
+
     Thing *obj = game->things[i];
+
     if (obj == NULL || obj->id == -1) {
       continue;
     }
     // printf("drawing object of id: %d\n", obj->id);
-    draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height,
-                   obj->color);
+    if (obj->poly == NULL) {
+      draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height,
+                     obj->color);
+    } else {
+
+      printf("polygon center: %f, %f\n", obj->poly->center.x,
+             obj->poly->center.y);
+
+      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+      SDL_Color color = {.r = obj->color[0],
+                         .g = obj->color[1],
+                         .b = obj->color[1],
+                         .a = obj->color[3]};
+
+      game->on_update_renderer(game, obj);
+      draw_filled_polygon(obj->poly, color, renderer);
+    }
   }
 
   SDL_RenderPresent(renderer);
