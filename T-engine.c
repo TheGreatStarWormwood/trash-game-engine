@@ -141,6 +141,7 @@ Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
   obj->color[1] = g;
   obj->color[2] = b;
   obj->color[3] = a;
+  obj->poly = NULL;
 
   // printf("index: %d\n", game->av_i_count);
   // printf("id of added object: %d\n", obj->id);
@@ -189,7 +190,10 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
     if (obj->poly == NULL) {
       draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height,
                      obj->color);
-    } else {
+    } 
+    else {
+      obj->poly->center.x = obj->x;
+      obj->poly->center.y = obj->y;
 
       printf("polygon center: %f, %f\n", obj->poly->center.x,
              obj->poly->center.y);

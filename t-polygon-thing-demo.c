@@ -123,7 +123,6 @@ void player_Update(void *pgame, Thing *thing, float delta_time) {
     if (check_bounding_box_collision(thing, other)) {
       if (other->type_id == ZOMBIE_TYPE) {
         thing->color[0] = 100;
-        rotate_points(thing->poly, 1 * M_PI / 180.0);
         break;
       }
     }
@@ -174,7 +173,7 @@ void player_Update_render(GameState *game, Thing *thing) {
 void update_renderer(void *pgame, Thing *thing) {
   switch (thing->type_id) {
   case PLAYER_TYPE:
-    // player_Update_render(pgame, thing);
+    player_Update_render(pgame, thing);
     break;
   }
 }
@@ -214,13 +213,14 @@ int main() {
   Vector vertices;
   vector_setup(&vertices, 2, sizeof(point));
 
-  vector_push_back(&vertices, create_point(0, -50));
-  vector_push_back(&vertices, create_point(20, 50));
-  vector_push_back(&vertices, create_point(-20, 50));
+  vector_push_back(&vertices, create_point(0, -10));
+  vector_push_back(&vertices, create_point(5, 10));
+  vector_push_back(&vertices, create_point(-5, 10));
   Tpolygon *poly = create_polygon(&vertices);
   poly->angle = 0.0;
-  poly->center.x = 100;
-  poly->center.y = 100;
+
+  poly->center.x = 50;
+  poly->center.y = 50;
 
   player->poly = poly;
 
