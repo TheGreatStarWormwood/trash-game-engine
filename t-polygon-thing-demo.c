@@ -139,6 +139,7 @@ void cursor_Update(void *pgame, Thing *thing, float delta_time) {
 }
 
 void update(void *pgame, Thing *thing, float delta_time) {
+
   switch (thing->type_id) {
   case PLAYER_TYPE:
     player_Update(pgame, thing, delta_time);
@@ -175,6 +176,20 @@ void update_renderer(void *pgame, Thing *thing) {
   case PLAYER_TYPE:
     player_Update_render(pgame, thing);
     break;
+  }
+}
+
+void game_loop(GameState *game, SDL_Renderer *renderer) {
+  while (1) {
+    float delta_time = 0.016f;
+
+    handle_input(game);
+    update_objects(game, delta_time);
+    render_objects(game, renderer);
+    if (game->quit_button_pressed) {
+    }
+
+    SDL_Delay(16);
   }
 }
 

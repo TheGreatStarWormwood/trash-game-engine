@@ -1,4 +1,5 @@
 #include "t-lib.c"
+#include <SDL2/SDL_scancode.h>
 #include <time.h>
 
 #define MAX_THINGS 100
@@ -36,7 +37,8 @@ typedef struct {
   int key_up, key_down, key_left, key_right;
   int mouse_x, mouse_y;
   int mouse_button_pressed;
-
+  int quit_button_pressed;
+  
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
   void (*on_update_renderer)(void *game, Thing *thing);
@@ -190,8 +192,7 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
     if (obj->poly == NULL) {
       draw_rectangle(renderer, obj->x, obj->y, obj->width, obj->height,
                      obj->color);
-    } 
-    else {
+    } else {
       obj->poly->center.x = obj->x;
       obj->poly->center.y = obj->y;
 
@@ -282,6 +283,7 @@ void handle_input(GameState *game) {
     // printf("key_left:%d\n", game->key_left);
     game->key_right = state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D];
     // printf("key_right:%d\n", game->key_right);
+    game->quit_button_pressed = state[SDL_SCANCODE_Q];
 
     if (event.type == SDL_MOUSEMOTION) {
       game->mouse_x = event.motion.x;
@@ -308,14 +310,3 @@ void destroy_thing(GameState *game, Thing *thing) {
   game->thing_count--;
 }
 
-void game_loop(GameState *game, SDL_Renderer *renderer) {
-  while (1) {
-    float delta_time = 0.016f;
-
-    handle_input(game);
-    update_objects(game, delta_time);
-    render_objects(game, renderer);
-
-    SDL_Delay(16);
-  }
-}
