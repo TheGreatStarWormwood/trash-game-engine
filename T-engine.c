@@ -1,6 +1,8 @@
 #include "t-lib.c"
+#include "vector/vector.h"
 #include <SDL2/SDL_scancode.h>
 #include <time.h>
+#include <unistd.h>
 
 #define MAX_THINGS 100
 #define DEFAULT_TYPE 0
@@ -38,11 +40,22 @@ typedef struct {
   int mouse_x, mouse_y;
   int mouse_button_pressed;
   int quit_button_pressed;
-  
+
   // custom hook for user defined functions
   void (*on_update)(void *game, Thing *thing, float delta_time);
   void (*on_update_renderer)(void *game, Thing *thing);
 } GameState;
+
+typedef struct {
+  Vector states; // vector storing all the game states
+  int state_count;
+  int active_state_i;
+
+  SDL_Window *win;
+  SDL_Renderer *renderer;
+
+  void (*on_update_global)(void *globe);
+} GlobeState;
 
 void print_thing_ids(GameState *game) {
   printf("Active Thing IDs:\n");
@@ -113,6 +126,52 @@ GameState *malloc_GameState() {
   return game;
 }
 
+void debug_print_vector(Vector vector) {
+
+  Iterator iterator = vector_begin(&vector);
+  Iterator last = vector_end(&vector);
+  for (; !iterator_equals(&iterator, &last); iterator_increment(&iterator)) {
+    *(int *)iterator_get(&iterator) += 1;
+  }
+}
+
+GlobeState *init_GlobeState(int WIDTH, int HEIGHT) {
+  GlobeState *globe = malloc(sizeof(GlobeState));
+  memset(globe, 0, sizeof(GlobeState));
+
+  Vector states;
+
+  vector_setup(&states, 10, sizeof(GameState *));
+  debug_print_vector(states);
+  globe->states = states;
+  globe->state_count = 0;
+  globe->active_state_i = -1;
+
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    printf("SDL_Init Error: %s\n", SDL_GetError());
+    return NULL;
+  }
+
+  SDL_Window *win = SDL_CreateWindow("2D Game Engine", 100, 100, WIDTH, HEIGHT,
+                                     SDL_WINDOW_SHOWN);
+  if (win == NULL) {
+    printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
+    SDL_Quit();
+    return NULL;
+  }
+
+  SDL_Renderer *renderer = SDL_CreateRenderer(
+      win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  if (renderer == NULL) {
+    printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+    return NULL;
+  }
+
+  return globe;
+}
+
 Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
                  float vy, int tid, int r, int g, int b, int a) {
   if (game->thing_count >= MAX_THINGS)
@@ -148,6 +207,18 @@ Thing *add_thing(GameState *game, int x, int y, int width, int height, float vx,
   // printf("index: %d\n", game->av_i_count);
   // printf("id of added object: %d\n", obj->id);
   return obj;
+}
+
+void set_Active_State(GlobeState *globe, int active_state_index) {
+  globe->active_state_i = active_state_index;
+}
+
+void add_State(GlobeState *globe, GameState *state) {
+  vector_push_back(&globe->states, state);
+  globe->state_count++;
+  if (globe->state_count == 1) {
+    set_Active_State(globe, 0);
+  }
 }
 
 void draw_Text(SDL_Renderer *renderer, Text *text) {
@@ -196,8 +267,8 @@ void render_objects(GameState *game, SDL_Renderer *renderer) {
       obj->poly->center.x = obj->x;
       obj->poly->center.y = obj->y;
 
-      printf("polygon center: %f, %f\n", obj->poly->center.x,
-             obj->poly->center.y);
+      // printf("polygon center: %f, %f\n", obj->poly->center.x,
+      //        obj->poly->center.y);
 
       SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
@@ -283,7 +354,7 @@ void handle_input(GameState *game) {
     // printf("key_left:%d\n", game->key_left);
     game->key_right = state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D];
     // printf("key_right:%d\n", game->key_right);
-    game->quit_button_pressed = state[SDL_SCANCODE_Q];
+    game->quit_button_pressed = state[SDL_SCANCODE_R];
 
     if (event.type == SDL_MOUSEMOTION) {
       game->mouse_x = event.motion.x;
@@ -310,3 +381,18 @@ void destroy_thing(GameState *game, Thing *thing) {
   game->thing_count--;
 }
 
+void game_loop(GlobeState *globe) {
+  while (1) {
+    if (globe->active_state_i < 0) {
+      continue;
+    }
+    GameState *active_game = vector_get(&globe->states, globe->active_state_i);
+    float delta_time = 0.016f;
+
+    handle_input(active_game);
+    update_objects(active_game, delta_time);
+    render_objects(active_game, globe->renderer);
+
+    SDL_Delay(16);
+  }
+}

@@ -1,7 +1,9 @@
 
 #include "T-engine.c"
 #include <linux/limits.h>
+#include <threads.h>
 #include <time.h>
+#include <unistd.h>
 
 #define PLAYER_TYPE 5
 #define CURSOR_TYPE 6
@@ -179,47 +181,13 @@ void update_renderer(void *pgame, Thing *thing) {
   }
 }
 
-void game_loop(GameState *game, SDL_Renderer *renderer) {
-  while (1) {
-    float delta_time = 0.016f;
-
-    handle_input(game);
-    update_objects(game, delta_time);
-    render_objects(game, renderer);
-    if (game->quit_button_pressed) {
-    }
-
-    SDL_Delay(16);
-  }
-}
-
 int main() {
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    printf("SDL_Init Error: %s\n", SDL_GetError());
-    return 1;
-  }
 
-  SDL_Window *win = SDL_CreateWindow("2D Game Engine", 100, 100, WIDTH, HEIGHT,
-                                     SDL_WINDOW_SHOWN);
-  if (win == NULL) {
-    printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
-  SDL_Renderer *renderer = SDL_CreateRenderer(
-      win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  if (renderer == NULL) {
-    printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
-    SDL_DestroyWindow(win);
-    SDL_Quit();
-    return 1;
-  }
+  GlobeState *globe = init_GlobeState(WIDTH, HEIGHT);
 
   GameState *game = malloc_GameState();
 
   game->on_update_renderer = update_renderer;
-
   game->on_update = update;
 
   Thing *player = add_thing(game, WIDTH / 2, HEIGHT / 2, 20, 20, 0.0f, 0.0f,
@@ -246,13 +214,11 @@ int main() {
       add_thing(game, 500, 500, 10, 10, 0.0f, 0.0f, 8, 255, 255, 0, 255);
   add_raycast_to_thing(zombie, 0, 10, 100);
 
+  add_State(globe, game);
+
   // print_thing_ids(game);
 
-  game_loop(game, renderer);
-
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(win);
-  SDL_Quit();
+  game_loop(globe);
 
   return 0;
 }
